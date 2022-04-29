@@ -4,7 +4,26 @@ import styles from '../styles/Home.module.css';
 import Banner from '../components/banner';
 import Card from '../components/card';
 
-export default function Home() {
+export async function getStaticProps(context) {
+  const response = await fetch(
+    `https://api.foursquare.com/v3/places/nearby?ll=43.65267326999575,-79.39545615725015&query=coffee&limit=8`,
+    {
+      headers: {
+        Authorization: process.env.NEXT_PUBLIC_FOURSQUARE_API_KEY,
+      },
+    }
+  );
+  const data = await response.json();
+  console.log(data);
+
+  return {
+    props: {
+      coffeeStores: data.results,
+    }, // will be passed to the page component as props
+  };
+}
+
+export default function Home({ coffeeStores }) {
   const handleOnButtonClick = () => {
     console.log('pressed');
   };
@@ -22,11 +41,27 @@ export default function Home() {
           buttonText='View stores nearby'
           handleOnClick={handleOnButtonClick}
         />
-        <Card
-          name='DarkHorse Coffee'
-          imgUrl='/static/test.jpeg'
-          href='/coffee-store/darkhorse-coffee'
-        />
+        {coffeeStores.length > 0 && (
+          <div>
+            <h2 className={styles.heading2}>Toronto stores</h2>
+            <div className={styles.cardLayout}>
+              {coffeeStores.map((store) => {
+                return (
+                  <Card
+                    key={store.fsq_id}
+                    name={store.name}
+                    imgUrl={
+                      store.imgUrl ||
+                      'https://images.unsplash.com/photo-1504753793650-d4a2b783c15e?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80'
+                    }
+                    href={`/coffee-store/${store.fsq_id}`}
+                    className={styles.card}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
