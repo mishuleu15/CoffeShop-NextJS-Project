@@ -4,34 +4,16 @@ import Image from 'next/image';
 import cls from 'classnames';
 
 import { useRouter } from 'next/router';
-
-// import coffeeStores from '../../data/coffee-stores.json';
+import { fetchCoffeeStores } from '../../lib/coffee-stores';
 
 import styles from '../../styles/coffee-store.module.css';
 
-// export async function getStaticProps({ params }) {
-//   return {
-//     props: {
-//       coffeeStore: coffeeStores.,
-//     }, // will be passed to the page component as props
-//   };
-// }
-
 export async function getStaticProps({ params }) {
-  const response = await fetch(
-    `https://api.foursquare.com/v3/places/nearby?ll=43.65267326999575,-79.39545615725015&query=coffee&limit=8`,
-    {
-      headers: {
-        Authorization: process.env.NEXT_PUBLIC_FOURSQUARE_API_KEY,
-      },
-    }
-  );
-  const data = await response.json();
-  console.log(data);
+  const data = await fetchCoffeeStores();
 
   return {
     props: {
-      coffeeStores: data.results.find((coffeeStore) => {
+      coffeeStores: data.find((coffeeStore) => {
         return coffeeStore.fsq_id.toString() === params.id;
       }),
     }, // will be passed to the page component as props
@@ -39,18 +21,9 @@ export async function getStaticProps({ params }) {
 }
 
 export async function getStaticPaths() {
-  const response = await fetch(
-    `https://api.foursquare.com/v3/places/nearby?ll=43.65267326999575,-79.39545615725015&query=coffee&limit=8`,
-    {
-      headers: {
-        Authorization: process.env.NEXT_PUBLIC_FOURSQUARE_API_KEY,
-      },
-    }
-  );
-  const data = await response.json();
+  const data = await fetchCoffeeStores();
 
-  const paths = data.results.map((coffeeStore) => {
-    console.log(coffeeStore.fsq_id);
+  const paths = data.map((coffeeStore) => {
     return {
       params: {
         id: coffeeStore.fsq_id.toString(),
@@ -69,7 +42,6 @@ const CoffeeStore = (props) => {
   if (router.isFallback) {
     return <h1>Loading...</h1>;
   }
-
   const { location, name, imgUrl } = props.coffeeStores;
 
   const handleUpvoteButton = () => {
@@ -85,7 +57,7 @@ const CoffeeStore = (props) => {
         <div className={styles.col1}>
           <div className={styles.backToHomeLink}>
             <Link href='/'>
-              <a>Back to home</a>
+              <a> 🡰 Back to home</a>
             </Link>
           </div>
           <div className={styles.nameWrapper}>
