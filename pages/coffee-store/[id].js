@@ -3,19 +3,25 @@ import Head from 'next/head';
 import Image from 'next/image';
 import cls from 'classnames';
 
+import { useContext, useState, useEffect } from 'react';
+
 import { useRouter } from 'next/router';
 import { fetchCoffeeStores } from '../../lib/coffee-stores';
 
+import { StoreContext } from '../_app';
+
 import styles from '../../styles/coffee-store.module.css';
+import { isEmpty } from '../../utils';
 
 export async function getStaticProps({ params }) {
   const data = await fetchCoffeeStores();
+  const findCoffeeStoreById = data.find((coffeeStore) => {
+    return coffeeStore.fsq_id.toString() === params.id;
+  });
 
   return {
     props: {
-      coffeeStores: data.find((coffeeStore) => {
-        return coffeeStore.fsq_id.toString() === params.id;
-      }),
+      coffeeStores: findCoffeeStoreById ? findCoffeeStoreById : {},
     }, // will be passed to the page component as props
   };
 }
@@ -36,13 +42,31 @@ export async function getStaticPaths() {
   };
 }
 
-const CoffeeStore = (props) => {
+const CoffeeStore = (initialProps) => {
   const router = useRouter();
+
+  const { id } = router.query;
+
+  const [coffeeStore, setCoffeeStore] = useState(initialProps.coffeeStores);
+  const {
+    state: { coffeeStores },
+  } = useContext(StoreContext);
+
+  useEffect(() => {
+    if (isEmpty(initialProps.coffeeStores)) {
+      if (coffeeStores.length > 0) {
+        const findCoffeeStoreById = coffeeStores.find((coffeeStore) => {
+          return coffeeStore.fsq_id.toString() === id;
+        });
+        setCoffeeStore(findCoffeeStoreById);
+      }
+    }
+  }, [id]);
 
   if (router.isFallback) {
     return <h1>Loading...</h1>;
   }
-  const { location, name, imgUrl } = props.coffeeStores;
+  const { location, name, imgUrl } = coffeeStore;
 
   const handleUpvoteButton = () => {
     //
@@ -82,9 +106,9 @@ const CoffeeStore = (props) => {
               height='24'
               alt='icon'
             />
-            <p className={styles.text}>{location.address}</p>
+            <p className={styles.text}>{location?.address}</p>
           </div>
-          {location.neighborhood && (
+          {location?.neighborhood && (
             <div className={styles.iconWrapper}>
               <Image
                 src='/static/icons/nearMe.svg'
