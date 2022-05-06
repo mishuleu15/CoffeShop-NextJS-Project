@@ -23,24 +23,26 @@ export default function Home(props) {
   const { handleTrackLocation, locationErrorMsg, isFindingLocation } =
     useTrackLocation();
 
-  // const [coffeeStores, setCoffeeStores] = useState('');
   const [coffeeStoresError, setCoffeeStoresError] = useState(null);
 
   const { dispatch, state } = useContext(StoreContext);
   const { coffeeStores, latLong } = state;
 
-  console.log({ latLong, locationErrorMsg });
-
   const setCoffeeStoresByLocation = async () => {
     if (latLong) {
       try {
-        const fetchedCoffeeStores = await fetchCoffeeStores(latLong);
-        console.log('fetchedCoffeeStores');
-        // setCoffeeStores(fetchedCoffeeStores);
+        const res = await fetch(
+          `/api/getCoffeeStoresByLocation?latLong=${latLong}&limit=30`
+        );
+
+        const {
+          data: { response },
+        } = await res.json();
+
         dispatch({
           type: ACTION_TYPES.SET_COFFEE_STORES,
           payload: {
-            coffeeStores: fetchedCoffeeStores,
+            coffeeStores: response,
           },
         });
       } catch (error) {
